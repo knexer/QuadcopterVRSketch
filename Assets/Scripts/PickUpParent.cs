@@ -4,29 +4,24 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(SteamVR_TrackedObject))]
 public class PickUpParent : MonoBehaviour {
+    public GameObject Sphere;
 
     private SteamVR_TrackedObject trackedObj;
     private SteamVR_Controller.Device device;
 
-    private HashSet<GameObject> grabbedChildren;
-
 	void Awake () {
         trackedObj = GetComponent<SteamVR_TrackedObject>();
-        grabbedChildren = new HashSet<GameObject>();
 	}
 	
 	void FixedUpdate () {
         device = SteamVR_Controller.Input((int)trackedObj.index);
 
-        if (device.GetTouchUp(SteamVR_Controller.ButtonMask.Trigger))
+        if (device.GetPressUp(SteamVR_Controller.ButtonMask.Touchpad))
         {
-            foreach (GameObject formerlyGrabbed in grabbedChildren)
-            {
-                formerlyGrabbed.transform.SetParent(null, true);
-                formerlyGrabbed.GetComponent<Rigidbody>().isKinematic = false;
-            }
-
-            grabbedChildren.Clear();
+            Debug.Log("Resetting sphere position.");
+            Sphere.transform.position = Vector3.zero;
+            Sphere.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            Sphere.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
         }
 	}
 
@@ -34,11 +29,36 @@ public class PickUpParent : MonoBehaviour {
     {
         Debug.Log("Trigger colliding with " + other.name);
 
-        if (device.GetTouch(SteamVR_Controller.ButtonMask.Trigger) && ! grabbedChildren.Contains(other.gameObject))
+        if (device.GetTouch(SteamVR_Controller.ButtonMask.Trigger))
         {
             other.transform.parent = transform;
             other.GetComponent<Rigidbody>().isKinematic = true;
-            grabbedChildren.Add(other.gameObject);
+        }
+
+        if (device.GetTouchUp(SteamVR_Controller.ButtonMask.Trigger))
+        {
+            other.transform.SetParent(null, true);
+            other.GetComponent<Rigidbody>().isKinematic = false;
+
+            tossObject(other.GetComponent<Rigidbody>());
         }
     }
+
+    private void tossObject(Rigidbody other)
+    {
+        Transform origin = trackedObj.origin ? trackedObj.origin : trackedObj.transform.parent;
+
+        if (origin != null)
+        {
+            other.velocity = origin.TransformVector(device.velocity);
+            other.angularVelocity = origin.TransformVector(device.angularVelocity);// TODO is this too naive?
+        }
+        else
+        {
+            other.velocity = device.velocity;
+            other.angularVelocity = device.angularVelocity;// TODO is this too naive?
+        }
+    }
+
+
 }
