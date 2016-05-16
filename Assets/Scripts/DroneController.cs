@@ -3,9 +3,12 @@ using System.Collections;
 
 [RequireComponent(typeof(SteamVR_TrackedObject))]
 public class DroneController : MonoBehaviour {
-    ///// CONFIGURABLES /////
+    ///// HOOKUP CONFIGURABLES /////
     public GameObject Drone;
     public DroneAnimator Animator;
+
+    ///// BEHAVIOR CONFIGURABLES /////
+    public float MaxForce;
 
     ///// INFERRED CONFIGURATION /////
     private SteamVR_Controller.Device _device;
@@ -25,7 +28,19 @@ public class DroneController : MonoBehaviour {
     {
         _device = SteamVR_Controller.Input((int)_controller.index);
 
-        Vector2 throttle = _device.GetAxis(Valve.VR.EVRButtonId.k_EButton_Axis1);
-        Debug.Log("Trigger state: (" + throttle.x + ", " + throttle.y + ")");
+        handleThrottle();
 	}
+
+    void handleThrottle()
+    {
+        // get trigger degree of activation
+        float throttle = _device.GetAxis(Valve.VR.EVRButtonId.k_EButton_Axis1).x;
+
+        // compute force direction + magnitude
+        Vector3 localSpaceForce = new Vector3(0, 0, throttle * MaxForce);
+        Vector3 worldSpaceForce = Drone.transform.TransformDirection(localSpaceForce);
+
+        // apply to drone
+        Drone.GetComponent<Rigidbody>().AddForce(worldSpaceForce);
+    }
 }
