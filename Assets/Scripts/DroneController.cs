@@ -28,19 +28,25 @@ public class DroneController : MonoBehaviour {
     {
         _device = SteamVR_Controller.Input((int)_controller.index);
 
-        handleThrottle();
-	}
-
-    void handleThrottle()
-    {
-        // get trigger degree of activation
         float throttle = _device.GetAxis(Valve.VR.EVRButtonId.k_EButton_Axis1).x;
 
+        handleThrottle(throttle);
+
+        handleOrientation(throttle);
+	}
+
+    void handleThrottle(float throttle)
+    {
         // compute force direction + magnitude
         Vector3 localSpaceForce = new Vector3(0, 0, throttle * MaxForce);
         Vector3 worldSpaceForce = Drone.transform.TransformDirection(localSpaceForce);
 
         // apply to drone
         Drone.GetComponent<Rigidbody>().AddForce(worldSpaceForce);
+    }
+
+    void handleOrientation(float throttle)
+    {
+        Drone.GetComponent<Rigidbody>().MoveRotation(_controller.transform.rotation);
     }
 }
