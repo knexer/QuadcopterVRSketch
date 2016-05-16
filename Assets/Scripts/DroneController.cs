@@ -18,11 +18,13 @@ public class DroneController : MonoBehaviour {
     void Awake()
     {
         _controller= GetComponent<SteamVR_TrackedObject>();
-        _device = SteamVR_Controller.Input((int)_controller.index);
 	}
 	
 	// Update is called once per frame
-	void FixedUpdate () {
+    void FixedUpdate()
+    {
+        _device = SteamVR_Controller.Input((int)_controller.index);
+
         Vector2 throttle = _device.GetAxis(Valve.VR.EVRButtonId.k_EButton_Axis1);
         Debug.Log("Trigger state: (" + throttle.x + ", " + throttle.y + ")");
 	}
